@@ -1,0 +1,7 @@
+expo.modules.mymodule.my-module-pngs-0 /Users/macbookair/Desktop/VoiceEmergencySystem/mobile-app/modules/my-module/android/build/generated/res/pngs/release
+expo.modules.mymodule.my-module-resValues-1 /Users/macbookair/Desktop/VoiceEmergencySystem/mobile-app/modules/my-module/android/build/generated/res/resValues/release
+expo.modules.mymodule.my-module-mergeReleaseResources-2 /Users/macbookair/Desktop/VoiceEmergencySystem/mobile-app/modules/my-module/android/build/intermediates/incremental/release/mergeReleaseResources/merged.dir
+expo.modules.mymodule.my-module-mergeReleaseResources-3 /Users/macbookair/Desktop/VoiceEmergencySystem/mobile-app/modules/my-module/android/build/intermediates/incremental/release/mergeReleaseResources/stripped.dir
+expo.modules.mymodule.my-module-release-4 /Users/macbookair/Desktop/VoiceEmergencySystem/mobile-app/modules/my-module/android/build/intermediates/merged_res/release/mergeReleaseResources
+expo.modules.mymodule.my-module-main-5 /Users/macbookair/Desktop/VoiceEmergencySystem/mobile-app/modules/my-module/android/src/main/res
+expo.modules.mymodule.my-module-release-6 /Users/macbookair/Desktop/VoiceEmergencySystem/mobile-app/modules/my-module/android/src/release/res
