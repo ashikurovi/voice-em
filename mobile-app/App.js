@@ -153,6 +153,12 @@ function DashboardScreen({ route, navigation }) {
     return words.some(word => getLevenshteinDistance(word, targetWord) <= maxDistance);
   };
 
+  useSpeechRecognitionEvent("error", (event) => {
+    console.log("Speech Error:", event);
+    setError("Speech Error: " + (event.error || event.message || JSON.stringify(event)));
+    setIsListening(false);
+  });
+
   // Voice Command Event Listener
   useSpeechRecognitionEvent("result", (event) => {
     let currentTranscript = "";
@@ -187,10 +193,9 @@ function DashboardScreen({ route, navigation }) {
     } else if (fuzzyMatch(text, 'women') || fuzzyMatch(text, 'children') || text.includes('109')) {
       MyModule.makePhoneCall('109');
       toggleListening(false);
-    } else if (fuzzyMatch(text, 'information') || fuzzyMatch(text, 'help') || text.includes('333')) {
-      // Prioritize 333 if explicitly asked, but 'help' might trigger SOS. Let's make SOS 'help' trigger first if needed, 
-      // but keeping it here means "help desk" or "help" triggers 333. Actually SOS is more critical.
-      // We will leave 'help' for SOS. Let's check SOS first!
+    } else if (fuzzyMatch(text, 'information') || text.includes('333')) {
+      MyModule.makePhoneCall('333');
+      toggleListening(false);
     } 
 
     // 3. Emergency SOS (General Help)
