@@ -37,8 +37,8 @@ function LoginScreen({ navigation }) {
       const response = await axios.post(`${API_URL}/auth/login`, { email, password });
       if (response.data.success) {
         navigation.replace('Dashboard', { 
-          token: response.data.token, 
-          user: response.data.user 
+          token: response.data.data.token, 
+          user: response.data.data 
         });
       }
     } catch (error) {
