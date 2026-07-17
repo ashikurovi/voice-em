@@ -37,6 +37,23 @@ setIo(io); // Save io instance to store
 app.use(express.json());
 app.use(cors());
 
+// Database Connection for Serverless (Vercel)
+const connectDB = async () => {
+  if (mongoose.connection.readyState >= 1) return;
+  try {
+    await mongoose.connect(process.env.MONGO_URI);
+    console.log('[DB] Connected to MongoDB');
+  } catch (err) {
+    console.error('[DB] Failed to connect to MongoDB', err);
+  }
+};
+
+// Ensure DB is connected before any request is processed
+app.use(async (req, res, next) => {
+  await connectDB();
+  next();
+});
+
 // Root Route for Vercel Health Check
 app.get('/', (req, res) => {
   res.status(200).json({ message: "Guardian Protocol API is running 🚀" });
@@ -84,16 +101,12 @@ io.on('connection', (socket) => {
   });
 });
 
-// Database Connection & Server Start
+// Database Connection & Server Start (for local testing)
 const PORT = process.env.PORT || 3001;
-
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => {
-    console.log('Connected to MongoDB');
+if (process.env.NODE_ENV !== 'production') {
+  connectDB().then(() => {
     server.listen(PORT, () => console.log(`Backend Server running on port ${PORT}`));
-  })
-  .catch((err) => {
-    console.error('Failed to connect to MongoDB', err);
   });
+}
 
 module.exports = app;
