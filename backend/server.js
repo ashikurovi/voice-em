@@ -17,21 +17,8 @@ const { errorHandler } = require('./src/middlewares/errorMiddleware');
 const app = express();
 const server = http.createServer(app);
 
-// Socket.IO Setup
-const io = new Server(server, {
-  cors: {
-    origin: '*',
-    methods: ['GET', 'POST']
-  }
-});
-
-// Pass io to request object
-app.use((req, res, next) => {
-  req.io = io;
-  next();
-});
-
-setIo(io); // Save io instance to store
+// We will initialize io dynamically for Vercel
+// io is attached to res.socket.server inside middleware
 
 // Global Middlewares
 app.use(express.json());
@@ -48,9 +35,64 @@ const connectDB = async () => {
   }
 };
 
-// Ensure DB is connected before any request is processed
+// Ensure DB is connected and Socket.io is initialized on Vercel
 app.use(async (req, res, next) => {
   await connectDB();
+
+  // Vercel Socket.io Hack
+  if (!res.socket || !res.socket.server) {
+    return next(); // Local environment fallback
+  }
+
+  if (!res.socket.server.io) {
+    console.log('[SOCKET] Initializing Socket.io on Vercel');
+    const io = new Server(res.socket.server, {
+      path: '/socket.io',
+      addTrailingSlash: false,
+      cors: {
+        origin: '*',
+        methods: ['GET', 'POST']
+      }
+    });
+
+    io.on('connection', (socket) => {
+      console.log(`[SOCKET] User connected: ${socket.id}`);
+
+      socket.on('update_location', async (data) => {
+        if (data && data.userId && data.lat && data.lng) {
+          activeSockets.set(data.userId.toString(), {
+            socketId: socket.id,
+            lat: data.lat,
+            lng: data.lng
+          });
+          console.log(`[SOCKET] Location updated for user ${data.userId}`);
+
+          try {
+            await User.findByIdAndUpdate(data.userId, {
+              lastLocation: { lat: data.lat, lng: data.lng, updatedAt: new Date() }
+            });
+          } catch (err) {
+            console.error('[DB] Failed to save location:', err.message);
+          }
+        }
+      });
+
+      socket.on('disconnect', () => {
+        console.log(`[SOCKET] User disconnected: ${socket.id}`);
+        for (const [userId, socketData] of activeSockets.entries()) {
+          if (socketData.socketId === socket.id) {
+            activeSockets.delete(userId);
+            break;
+          }
+        }
+      });
+    });
+
+    res.socket.server.io = io;
+    setIo(io); // Save io instance to store
+  }
+
+  req.io = res.socket.server.io;
   next();
 });
 
@@ -68,43 +110,43 @@ app.use('/api/auth', authRoutes);
 // Global Error Handler (must be after routes)
 app.use(errorHandler);
 
-io.on('connection', (socket) => {
-  console.log(`[SOCKET] User connected: ${socket.id}`);
-
-  socket.on('update_location', async (data) => {
-    if (data && data.userId && data.lat && data.lng) {
-      activeSockets.set(data.userId.toString(), {
-        socketId: socket.id,
-        lat: data.lat,
-        lng: data.lng
-      });
-      console.log(`[SOCKET] Location updated for user ${data.userId}`);
-
-      try {
-        await User.findByIdAndUpdate(data.userId, {
-          lastLocation: { lat: data.lat, lng: data.lng, updatedAt: new Date() }
-        });
-      } catch (err) {
-        console.error('[DB] Failed to save location:', err.message);
-      }
-    }
-  });
-
-  socket.on('disconnect', () => {
-    console.log(`[SOCKET] User disconnected: ${socket.id}`);
-    for (const [userId, socketData] of activeSockets.entries()) {
-      if (socketData.socketId === socket.id) {
-        activeSockets.delete(userId);
-        break;
-      }
-    }
-  });
-});
-
 // Database Connection & Server Start (for local testing)
 const PORT = process.env.PORT || 3001;
 if (process.env.NODE_ENV !== 'production') {
   connectDB().then(() => {
+    // Local Socket.io Init
+    const localIo = new Server(server, {
+      cors: { origin: '*', methods: ['GET', 'POST'] }
+    });
+    setIo(localIo);
+    
+    localIo.on('connection', (socket) => {
+      console.log(`[SOCKET] Local User connected: ${socket.id}`);
+      socket.on('update_location', async (data) => {
+        if (data && data.userId && data.lat && data.lng) {
+          activeSockets.set(data.userId.toString(), {
+            socketId: socket.id, lat: data.lat, lng: data.lng
+          });
+          await User.findByIdAndUpdate(data.userId, {
+            lastLocation: { lat: data.lat, lng: data.lng, updatedAt: new Date() }
+          }).catch(err => console.error(err));
+        }
+      });
+      socket.on('disconnect', () => {
+        for (const [userId, socketData] of activeSockets.entries()) {
+          if (socketData.socketId === socket.id) {
+            activeSockets.delete(userId);
+            break;
+          }
+        }
+      });
+    });
+
+    app.use((req, res, next) => {
+      req.io = localIo;
+      next();
+    });
+
     server.listen(PORT, () => console.log(`Backend Server running on port ${PORT}`));
   });
 }
