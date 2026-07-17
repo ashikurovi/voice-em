@@ -37,6 +37,11 @@ setIo(io); // Save io instance to store
 app.use(express.json());
 app.use(cors());
 
+// Root Route for Vercel Health Check
+app.get('/', (req, res) => {
+  res.status(200).json({ message: "Guardian Protocol API is running 🚀" });
+});
+
 // Mount Routes
 app.use('/api/emergency', emergencyRoutes);
 app.use('/api/admin', adminRoutes);
