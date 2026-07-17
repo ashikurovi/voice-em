@@ -48,9 +48,9 @@ export default function DashboardOverview() {
         <div className="bg-gray-800 p-6 rounded-xl border border-gray-700">
           <h3 className="text-xl font-semibold mb-2">Android App</h3>
           <p className="text-gray-400 text-sm mb-4">Download our Android app to enable voice-activated emergency triggers (e.g., shouting "Help me").</p>
-          <button className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded transition-colors cursor-not-allowed opacity-50">
-            Download APK (Soon)
-          </button>
+          <a href="/emergency-app.apk" download className="inline-block bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded transition-colors text-center">
+            Download APK
+          </a>
         </div>
       </div>
     </div>
