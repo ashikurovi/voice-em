@@ -10,8 +10,8 @@ import { io } from 'socket.io-client';
 
 const Stack = createNativeStackNavigator();
 // Ensure this matches your actual local backend IP
-const API_URL = 'http://192.168.1.100:3001/api'; 
-const SOCKET_URL = 'http://192.168.1.100:3001';
+const API_URL = 'https://voice-em-six.vercel.app/api'; 
+const SOCKET_URL = 'https://voice-em-six.vercel.app';
 
 // Theme Colors
 const theme = {
