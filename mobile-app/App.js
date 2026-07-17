@@ -271,7 +271,7 @@ function DashboardScreen({ route, navigation }) {
 
       if (response.data.success && response.data.eventId) {
         // Open Web Tracking View directly as requested (no auto-call on SOS)
-        const webUrl = `https://voice-em-six.vercel.app/track/${response.data.eventId}`; 
+        const webUrl = `https://voice-em-te28-kappa.vercel.app/track/${response.data.eventId}`; 
         Linking.openURL(webUrl).catch(() => setError("Could not open map URL"));
       } else {
         setError("Failed to trigger emergency.");
@@ -298,7 +298,7 @@ function DashboardScreen({ route, navigation }) {
             <Text style={styles.modalText}>Tracking ID: {incomingSos?.eventId}</Text>
             <View style={styles.modalButtons}>
               <TouchableOpacity style={styles.buttonPrimary} onPress={() => {
-                Linking.openURL(`https://voice-em-six.vercel.app/track/${incomingSos?.eventId}`);
+                Linking.openURL(`https://voice-em-te28-kappa.vercel.app/track/${incomingSos?.eventId}`);
                 setIncomingSos(null);
               }}>
                 <Text style={styles.buttonText}>View Live Tracker</Text>
@@ -320,7 +320,7 @@ function DashboardScreen({ route, navigation }) {
             <Text style={styles.subtitle}>Welcome back, {user?.fullName || 'User'}</Text>
           </View>
           <View style={{alignItems: 'flex-end', gap: 10}}>
-            <TouchableOpacity onPress={() => Linking.openURL('https://voice-em-six.vercel.app/dashboard')}>
+            <TouchableOpacity onPress={() => Linking.openURL('https://voice-em-te28-kappa.vercel.app/dashboard')}>
               <Text style={{color: theme.primary, fontWeight: 'bold', fontSize: 13}}>Admin Dashboard</Text>
             </TouchableOpacity>
             <TouchableOpacity onPress={() => navigation.replace('Login')}>
@@ -368,7 +368,7 @@ function DashboardScreen({ route, navigation }) {
         <View style={styles.card}>
           <View style={styles.cardHeader}>
             <Text style={styles.cardTitle}>📞 Trusted Contacts ({contacts.length})</Text>
-            <TouchableOpacity onPress={() => Linking.openURL('https://voice-em-six.vercel.app/dashboard/contacts')}>
+            <TouchableOpacity onPress={() => Linking.openURL('https://voice-em-te28-kappa.vercel.app/dashboard/contacts')}>
               <Text style={{color: theme.primary, fontSize: 13, fontWeight: 'bold'}}>Manage</Text>
             </TouchableOpacity>
           </View>
