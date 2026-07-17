@@ -217,23 +217,14 @@ function DashboardScreen({ route, navigation }) {
 
   const requestPermissions = async () => {
     await Location.requestForegroundPermissionsAsync();
-    ExpoSpeechRecognitionModule.requestPermissionsAsync();
+    await ExpoSpeechRecognitionModule.requestPermissionsAsync();
     
     if (Platform.OS === 'android') {
       try {
-        const granted = await PermissionsAndroid.request(
+        await PermissionsAndroid.requestMultiple([
           PermissionsAndroid.PERMISSIONS.CALL_PHONE,
-          {
-            title: "Phone Call Permission",
-            message: "Guardian Protocol needs access to make emergency phone calls automatically.",
-            buttonNeutral: "Ask Me Later",
-            buttonNegative: "Cancel",
-            buttonPositive: "OK"
-          }
-        );
-        if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
-          console.log("Call Phone permission denied");
-        }
+          PermissionsAndroid.PERMISSIONS.RECORD_AUDIO
+        ]);
       } catch (err) {
         console.warn(err);
       }
