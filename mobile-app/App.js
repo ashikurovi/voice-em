@@ -147,8 +147,14 @@ function DashboardScreen({ route, navigation }) {
     return matrix[b.length][a.length];
   };
 
-  const fuzzyMatch = (transcript, targetWord, maxDistance = 2) => {
+  const fuzzyMatch = (transcript, targetWord) => {
     if (transcript.includes(targetWord)) return true;
+    
+    // Dynamic distance based on word length to prevent false positives
+    let maxDistance = 2;
+    if (targetWord.length <= 3) maxDistance = 0;
+    else if (targetWord.length <= 5) maxDistance = 1;
+
     const words = transcript.split(/[\s,.-]+/);
     return words.some(word => getLevenshteinDistance(word, targetWord) <= maxDistance);
   };
@@ -156,6 +162,10 @@ function DashboardScreen({ route, navigation }) {
   useSpeechRecognitionEvent("error", (event) => {
     console.log("Speech Error:", event);
     setError("Speech Error: " + (event.error || event.message || JSON.stringify(event)));
+    setIsListening(false);
+  });
+
+  useSpeechRecognitionEvent("end", () => {
     setIsListening(false);
   });
 
@@ -184,22 +194,22 @@ function DashboardScreen({ route, navigation }) {
     if (foundContact) return;
 
     // 2. Check Hotlines
-    if (fuzzyMatch(text, 'police') || fuzzyMatch(text, 'fire') || text.includes('national emergency') || text.includes('999')) {
+    if (fuzzyMatch(text, 'police') || fuzzyMatch(text, 'fire') || text.includes('national emergency') || text.includes('999') || text.includes('পুলিশ')) {
       MyModule.makePhoneCall('999');
       toggleListening(false);
-    } else if (fuzzyMatch(text, 'health') || fuzzyMatch(text, 'ambulance') || text.includes('16263')) {
+    } else if (fuzzyMatch(text, 'health') || fuzzyMatch(text, 'ambulance') || text.includes('16263') || text.includes('অ্যাম্বুলেন্স') || text.includes('ডাক্তার')) {
       MyModule.makePhoneCall('16263');
       toggleListening(false);
-    } else if (fuzzyMatch(text, 'women') || fuzzyMatch(text, 'children') || text.includes('109')) {
+    } else if (fuzzyMatch(text, 'women') || fuzzyMatch(text, 'children') || text.includes('109') || text.includes('নারী') || text.includes('শিশু')) {
       MyModule.makePhoneCall('109');
       toggleListening(false);
-    } else if (fuzzyMatch(text, 'information') || text.includes('333')) {
+    } else if (fuzzyMatch(text, 'information') || text.includes('333') || text.includes('তথ্য')) {
       MyModule.makePhoneCall('333');
       toggleListening(false);
     } 
 
     // 3. Emergency SOS (General Help)
-    if (fuzzyMatch(text, 'help') || fuzzyMatch(text, 'bacao') || fuzzyMatch(text, 'bachao') || fuzzyMatch(text, 'bacaw') || fuzzyMatch(text, 'emergency')) {
+    if (fuzzyMatch(text, 'help') || fuzzyMatch(text, 'bacao') || fuzzyMatch(text, 'bachao') || fuzzyMatch(text, 'bacaw') || fuzzyMatch(text, 'emergency') || text.includes('বাঁচাও') || text.includes('সাহায্য')) {
       triggerSOS('GENERAL');
       toggleListening(false);
     }
