@@ -128,6 +128,31 @@ function DashboardScreen({ route, navigation }) {
     }
   };
 
+  // Levenshtein Distance for fuzzy matching
+  const getLevenshteinDistance = (a, b) => {
+    if (a.length === 0) return b.length;
+    if (b.length === 0) return a.length;
+    const matrix = [];
+    for (let i = 0; i <= b.length; i++) { matrix[i] = [i]; }
+    for (let j = 0; j <= a.length; j++) { matrix[0][j] = j; }
+    for (let i = 1; i <= b.length; i++) {
+      for (let j = 1; j <= a.length; j++) {
+        if (b.charAt(i - 1) === a.charAt(j - 1)) {
+          matrix[i][j] = matrix[i - 1][j - 1];
+        } else {
+          matrix[i][j] = Math.min(matrix[i - 1][j - 1] + 1, Math.min(matrix[i][j - 1] + 1, matrix[i - 1][j] + 1));
+        }
+      }
+    }
+    return matrix[b.length][a.length];
+  };
+
+  const fuzzyMatch = (transcript, targetWord, maxDistance = 2) => {
+    if (transcript.includes(targetWord)) return true;
+    const words = transcript.split(/[\s,.-]+/);
+    return words.some(word => getLevenshteinDistance(word, targetWord) <= maxDistance);
+  };
+
   // Voice Command Event Listener
   useSpeechRecognitionEvent("result", (event) => {
     let currentTranscript = "";
@@ -142,7 +167,7 @@ function DashboardScreen({ route, navigation }) {
     let foundContact = false;
     if (contacts.length > 0) {
       for (const contact of contacts) {
-        if (contact.contactName && text.includes(contact.contactName.toLowerCase())) {
+        if (contact.contactName && fuzzyMatch(text, contact.contactName.toLowerCase(), 2)) {
           MyModule.makePhoneCall(contact.phoneNumber);
           toggleListening(false);
           foundContact = true;
@@ -153,21 +178,23 @@ function DashboardScreen({ route, navigation }) {
     if (foundContact) return;
 
     // 2. Check Hotlines
-    if (text.includes('police') || text.includes('fire') || text.includes('national emergency') || text.includes('999')) {
+    if (fuzzyMatch(text, 'police') || fuzzyMatch(text, 'fire') || text.includes('national emergency') || text.includes('999')) {
       MyModule.makePhoneCall('999');
       toggleListening(false);
-    } else if (text.includes('health') || text.includes('ambulance') || text.includes('16263')) {
+    } else if (fuzzyMatch(text, 'health') || fuzzyMatch(text, 'ambulance') || text.includes('16263')) {
       MyModule.makePhoneCall('16263');
       toggleListening(false);
-    } else if (text.includes('women') || text.includes('children') || text.includes('109')) {
+    } else if (fuzzyMatch(text, 'women') || fuzzyMatch(text, 'children') || text.includes('109')) {
       MyModule.makePhoneCall('109');
       toggleListening(false);
-    } else if (text.includes('information') || text.includes('help desk') || text.includes('333')) {
-      MyModule.makePhoneCall('333');
-      toggleListening(false);
+    } else if (fuzzyMatch(text, 'information') || fuzzyMatch(text, 'help') || text.includes('333')) {
+      // Prioritize 333 if explicitly asked, but 'help' might trigger SOS. Let's make SOS 'help' trigger first if needed, 
+      // but keeping it here means "help desk" or "help" triggers 333. Actually SOS is more critical.
+      // We will leave 'help' for SOS. Let's check SOS first!
     } 
-    // 3. Emergency SOS
-    else if (text.includes("help") || text.includes("bacao") || text.includes("emergency")) {
+
+    // 3. Emergency SOS (General Help)
+    if (fuzzyMatch(text, 'help') || fuzzyMatch(text, 'bacao') || fuzzyMatch(text, 'bachao') || fuzzyMatch(text, 'bacaw') || fuzzyMatch(text, 'emergency')) {
       triggerSOS('GENERAL');
       toggleListening(false);
     }
@@ -244,7 +271,7 @@ function DashboardScreen({ route, navigation }) {
 
       if (response.data.success && response.data.eventId) {
         // Open Web Tracking View directly as requested (no auto-call on SOS)
-        const webUrl = `http://192.168.1.100:3000/track/${response.data.eventId}`; // Assuming Next.js runs on 3000
+        const webUrl = `https://voice-em-six.vercel.app/track/${response.data.eventId}`; 
         Linking.openURL(webUrl).catch(() => setError("Could not open map URL"));
       } else {
         setError("Failed to trigger emergency.");
@@ -271,7 +298,7 @@ function DashboardScreen({ route, navigation }) {
             <Text style={styles.modalText}>Tracking ID: {incomingSos?.eventId}</Text>
             <View style={styles.modalButtons}>
               <TouchableOpacity style={styles.buttonPrimary} onPress={() => {
-                Linking.openURL(`http://192.168.1.100:3000/track/${incomingSos?.eventId}`);
+                Linking.openURL(`https://voice-em-six.vercel.app/track/${incomingSos?.eventId}`);
                 setIncomingSos(null);
               }}>
                 <Text style={styles.buttonText}>View Live Tracker</Text>
@@ -293,7 +320,7 @@ function DashboardScreen({ route, navigation }) {
             <Text style={styles.subtitle}>Welcome back, {user?.fullName || 'User'}</Text>
           </View>
           <View style={{alignItems: 'flex-end', gap: 10}}>
-            <TouchableOpacity onPress={() => Linking.openURL('http://192.168.1.100:3000/dashboard')}>
+            <TouchableOpacity onPress={() => Linking.openURL('https://voice-em-six.vercel.app/dashboard')}>
               <Text style={{color: theme.primary, fontWeight: 'bold', fontSize: 13}}>Admin Dashboard</Text>
             </TouchableOpacity>
             <TouchableOpacity onPress={() => navigation.replace('Login')}>
@@ -341,7 +368,7 @@ function DashboardScreen({ route, navigation }) {
         <View style={styles.card}>
           <View style={styles.cardHeader}>
             <Text style={styles.cardTitle}>📞 Trusted Contacts ({contacts.length})</Text>
-            <TouchableOpacity onPress={() => Linking.openURL('http://192.168.1.100:3000/dashboard/contacts')}>
+            <TouchableOpacity onPress={() => Linking.openURL('https://voice-em-six.vercel.app/dashboard/contacts')}>
               <Text style={{color: theme.primary, fontSize: 13, fontWeight: 'bold'}}>Manage</Text>
             </TouchableOpacity>
           </View>
